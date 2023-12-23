@@ -1,25 +1,35 @@
 from aiogram.filters import Command
-from aiogram.types import Message
-from aiogram import Bot, Dispatcher
+from aiogram.types import Message, User, SwitchInlineQueryChosenChat
+from aiogram.types import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import Bot, Dispatcher, enums
+from utils.my_filters import *
+from utils.my_utils import *
+from uuid import uuid4
+import utils.database as my_database
+from importlib import reload
 import asyncio
 import logging
 import dotenv
+import httpx
 import json
-
+import re
 
 # Подсказочки для любимого PyCharm
 _config: dict[str: str]
 _dot_env_file: str
+
+# Создаём/извлекаем конфигурацию с .env файлом
 try:
-    with open("config.json", encoding="utf-8") as file:
-        _config = json.load(file)
+    with open("config.json", encoding="utf-8") as _file:
+        _config = json.load(_file)
     _dot_env_file = _config["env_file"]
 except FileNotFoundError:
     _dot_env_file = ".env" and input("Введите название файла с переменными (примеры: .env или env/.env):")
     _config = {"env_file": _dot_env_file}
-    with open("config.json", encoding="utf-8") as file:
-        json.dump(_config, file, ensure_ascii=False)
+    with open("config.json", "w", encoding="utf-8") as _file:
+        json.dump(_config, _file, ensure_ascii=False)
 
+# Пытаемся получить нужные АПИ
 _env_in_dirs = dotenv.load_dotenv(_dot_env_file, verbose=True)
 if not _env_in_dirs:
     DICT_API = input("Input your Yandex dictionary API "
@@ -33,29 +43,50 @@ else:
     DICT_API = dotenv.get_key(_dot_env_file, "DICT_API")
     BOT_API = dotenv.get_key(_dot_env_file, "BOT_API")
 
-# TODO
-#  Команда /start которая будет иметь кнопку, которая в свою очередь попросит юзера прислать инлайн реквест в чат
-#  Инлайн старт, например просто @GameWordsOnRus_bot, появится кнопка (начать игру)
-
-
-"""
-думаю чисто на инлайн режиме сделать
-один чел начинает, бот присылает что-то типо "ник_чела начал игру! Его слово: слово"
-А снизу кнопка *Продолжить*, которая будет делать инлайн реквест типо @мой_бот uuid4_игры, 
-    а подсказка (в виде текста-ответа): *введите слово для игры*
-чел вводит слово, и появляется кнопка *продолжить*, или текст *это слово уже было! предложи другое*
-надо ещё команду /start прикрутить, что бы было, с чего начинать
-"""
-
 
 logging.basicConfig(level=logging.INFO)
+httpx_logger = logging.getLogger("httpx")
+httpx_logger.setLevel(logging.WARNING)
+aio_event_logger = logging.getLogger("aiogram.event")
+aio_event_logger.setLevel(logging.WARNING)
+
 bot = Bot(BOT_API)
 dp = Dispatcher()
 
 
 @dp.message(Command("start"))
-async def cmd_start(message: Message):
-    await message.answer("Hello!")
+async def _cmd_start(message: Message):
+    import scripts.cmd_start as cmd_start
+    cmd_start = reload(cmd_start)
+    await cmd_start.main(message)
+
+
+@dp.callback_query(CallbackLen(2))
+async def _callback_continue(callback_query: CallbackQuery):
+    import scripts.callback_continue as callback_continue
+    callback_continue = reload(callback_continue)
+    await callback_continue.main(callback_query)
+    
+
+@dp.inline_query(InlineLen(3))
+async def _inline_game(inline_query: InlineQuery):
+    import scripts.inline_game as inline_game
+    inline_game = reload(inline_game)
+    await inline_game.main(inline_query)
+    
+
+@dp.inline_query(InlineLen(2))
+async def _inline_delete_game(inline_query: InlineQuery):
+    import scripts.inline_delete_game as inline_delete_game
+    inline_delete_game = reload(inline_delete_game)
+    await inline_delete_game.main(inline_query)
+
+
+@dp.inline_query(InlineLen(1))
+async def _inline_start(inline_query: InlineQuery):
+    import scripts.inline_start as inline_start
+    inline_start = reload(inline_start)
+    await inline_start.main(inline_query)
 
 
 async def main():

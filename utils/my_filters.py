@@ -43,10 +43,10 @@ class CallbackLen(BaseFilter):
         self.index = index
 
     async def __call__(self, callback_query: InlineQuery):
-        if callback_query.query == "":
+        if callback_query.data == "":
             index = 0
         else:
-            args = callback_query.query.split(" ")
+            args = callback_query.data.split(" ")
             index = len(args)
 
         return self.index == index
@@ -59,9 +59,9 @@ class CallbackIndex(BaseFilter):
         self.what = what
 
     async def __call__(self, callback_query: InlineQuery):
-        if callback_query.query == "":
+        if callback_query.data == "":
             query_list = []
         else:
-            query_list = callback_query.query.split(" ")
+            query_list = callback_query.data.split(" ")
 
         return self.what in query_list and query_list.index(self.what) == self.index
