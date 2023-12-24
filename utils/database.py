@@ -1,6 +1,7 @@
+import logging
 import json
 
-
+logger = logging.getLogger(__name__)
 database_name = "source/database.json"
 
 
@@ -12,7 +13,7 @@ def _load_raw() -> dict:
 
 def _save_raw(raw: dict) -> dict:
     with open(database_name, encoding="utf-8", mode="w") as file:
-        json.dump(raw, file, ensure_ascii=False, sort_keys=True, separators=[", ", ": "])
+        json.dump(raw, file, ensure_ascii=False, sort_keys=True, indent=4)
     return raw
 
 
@@ -41,15 +42,38 @@ def is_new_user(key: str, uid: str) -> bool:
 def get_next_user(key: str) -> str:
     raw = _load_raw()
     users = raw[key]
-    
+
     result = []
     for uid_n_word in list(reversed(users)):
         uid = list(uid_n_word.keys())[0]
         if uid in result:
-            break
+            continue
         else:
             result.append(uid)
-    return result[-1]
+    logger.debug(f"{result=}")
+    return result[len(result)-1]
+
+
+def get_users(key: str) -> list:
+    raw = _load_raw()
+    users = raw[key]
+
+    result = []
+    for uid_n_word in list(reversed(users)):
+        uid = list(uid_n_word.keys())[0]
+        if uid in result:
+            continue
+        else:
+            result.append(uid)
+    return result
+
+
+def get_words(key: str) -> list:
+    raw = _load_raw()
+    users = raw[key]
+
+    result = [(list(uid_n_word.values())[0]) for uid_n_word in users]
+    return result
 
 
 def get_last_word(key: str) -> str:
@@ -93,3 +117,22 @@ def delete_game(key: str) -> dict:
     raw = _load_raw()
     raw.pop(key, None)
     return _save_raw(raw)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    create_game("test", "test1*мама")
+    append_word("test", "test1*арбуз")
+    append_word("test", "test2*зебра")
+    print(get_next_user("test"))
+    append_word("test", "test1*аршина")
+    print(get_next_user("test"))
+    append_word("test", "test3*алгебра")
+    print(get_next_user("test"))
+    append_word("test", "test2*арест")
+    print(get_next_user("test"))
+    append_word("test", "test4*тыква")
+    print(get_next_user("test"))
+    append_word("test", "test1*артикуль")
+    print(get_next_user("test"))
+    delete_game("test")

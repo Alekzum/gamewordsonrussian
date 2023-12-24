@@ -1,18 +1,12 @@
 from aiogram.filters import Command
-from aiogram.types import Message, User, SwitchInlineQueryChosenChat
-from aiogram.types import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, InlineQuery, CallbackQuery
 from aiogram import Bot, Dispatcher, enums
-from utils.my_filters import *
-from utils.my_utils import *
-from uuid import uuid4
-import utils.database as my_database
+from utils.my_filters import InlineLen, CallbackLen
 from importlib import reload
 import asyncio
 import logging
 import dotenv
-import httpx
 import json
-import re
 
 # Подсказочки для любимого PyCharm
 _config: dict[str: str]
@@ -50,7 +44,7 @@ httpx_logger.setLevel(logging.WARNING)
 aio_event_logger = logging.getLogger("aiogram.event")
 aio_event_logger.setLevel(logging.WARNING)
 
-bot = Bot(BOT_API)
+bot = Bot(BOT_API, parse_mode=enums.ParseMode.HTML)
 dp = Dispatcher()
 
 
@@ -58,35 +52,35 @@ dp = Dispatcher()
 async def _cmd_start(message: Message):
     import scripts.cmd_start as cmd_start
     cmd_start = reload(cmd_start)
-    await cmd_start.main(message)
+    await cmd_start.main(bot, message)
 
 
 @dp.callback_query(CallbackLen(2))
 async def _callback_continue(callback_query: CallbackQuery):
     import scripts.callback_continue as callback_continue
     callback_continue = reload(callback_continue)
-    await callback_continue.main(callback_query)
-    
+    await callback_continue.main(bot, callback_query)
 
-@dp.inline_query(InlineLen(3))
-async def _inline_game(inline_query: InlineQuery):
-    import scripts.inline_game as inline_game
-    inline_game = reload(inline_game)
-    await inline_game.main(inline_query)
-    
 
 @dp.inline_query(InlineLen(2))
 async def _inline_delete_game(inline_query: InlineQuery):
-    import scripts.inline_delete_game as inline_delete_game
-    inline_delete_game = reload(inline_delete_game)
-    await inline_delete_game.main(inline_query)
+    import scripts.inline_game as inline_game
+    inline_game = reload(inline_game)
+    await inline_game.main(bot, inline_query)
 
 
 @dp.inline_query(InlineLen(1))
 async def _inline_start(inline_query: InlineQuery):
     import scripts.inline_start as inline_start
     inline_start = reload(inline_start)
-    await inline_start.main(inline_query)
+    await inline_start.main(bot, inline_query)
+
+
+@dp.inline_query(InlineLen(0))
+async def _inline_info(inline_query: InlineQuery):
+    import scripts.inline_start as inline_start
+    inline_start = reload(inline_start)
+    await inline_start.main(bot, inline_query)
 
 
 async def main():

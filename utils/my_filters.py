@@ -21,6 +21,21 @@ class InlineLen(BaseFilter):
         return self.index == index
 
 
+class InlineLenGreater(BaseFilter):
+    """Return len(inline's query) == index"""
+    def __init__(self, index: int):
+        self.index = index
+
+    async def __call__(self, inline: InlineQuery):
+        if inline.query == "":
+            index = 0
+        else:
+            args = inline.query.split(" ")
+            index = len(args)
+
+        return self.index > index
+
+
 class InlineIndex(BaseFilter):
     """Return (inline's query).index(what) == index"""
     def __init__(self, index: int, what: str):
