@@ -1,2 +1,6 @@
-/.env
-/config.json
+.*
+.env
+__pycache__
+config.json
+database.json
+src_words.json

@@ -1,13 +1,5 @@
-from os.path import isfile, join, dirname, abspath
-from os import listdir
-
-
-res = dirname(abspath(__file__))
-only_files = [f[:f.rfind('.')] for f in listdir(res) if isfile(join(res, f))][:-1]
-
-__all__ = []
-modules = set()
-for module_name in only_files:
-    temp_module = __import__("utils."+module_name)
-    modules.add(temp_module)
-    __all__.append(module_name)
+from . import my_logging
+from . import runtime_platform
+from . import config
+from . import my_filters
+from . import my_utils

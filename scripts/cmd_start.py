@@ -7,7 +7,7 @@ from utils import database as my_database, my_utils
 my_database, my_utils = reload(my_database), reload(my_utils)
 
 
-async def main(bot: Bot, message: Message):
+async def main(message: Message):
     user: User = message.from_user
     mention = user.mention_html()
     message_text = (
